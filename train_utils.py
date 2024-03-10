@@ -1,5 +1,23 @@
 import numpy as np
 import torch
+import matplotlib.pyplot as plt
+from torch import optim
+from sklearn.model_selection import train_test_split
+from torch.utils.data import DataLoader, TensorDataset
+
+def process_data(X_train_valid, y_train_valid, X_test, y_test, val_size=0.15):
+    # Prepare the training & testing data
+    X_train, X_val, y_train, y_val = train_test_split(X_train_valid, 
+                                                      y_train_valid, 
+                                                      test_size=val_size, 
+                                                      stratify=y_train_valid)
+    X_train = torch.tensor(X_train, dtype=torch.float32)
+    y_train = torch.tensor(y_train-769, dtype=torch.long)
+    X_val = torch.tensor(X_val, dtype=torch.float32)
+    y_val = torch.tensor(y_val-769, dtype=torch.long)
+    X_test = torch.tensor(X_test, dtype=torch.float32)
+    y_test = torch.tensor(y_test-769, dtype=torch.long)
+    return TensorDataset(X_train, y_train), X_val, y_val, X_test, y_test
 
 def randomly_crop(X, crop_len):
     # Randomly crop part of the sequence
@@ -86,7 +104,6 @@ def model_train(num_epochs, model, optimizer, dataloader,
 
 def plot_history(train_loss, train_acc, val_loss, val_acc, test_loss, test_acc):
     # Plot the training history
-    print(max(test_acc))
     plt.figure(figsize=(12, 5))
     plt.subplot(1, 2, 1)
     plt.plot(train_loss, 'pink', label='Train')
