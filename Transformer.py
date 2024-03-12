@@ -2,6 +2,9 @@ import torch
 import torch.nn as nn
 from torch.nn import MultiheadAttention
 
+# Acknowledgement: Part of the code is modified 
+# from my past assignments from CS247 Advanced Data Mining
+
 class PositionalEncoding(torch.nn.Module):
     def __init__(self, d_model, max_len=5000):
         # The default positional encoding method
@@ -19,14 +22,6 @@ class PositionalEncoding(torch.nn.Module):
         seq_len = x.shape[1]
         x = x + self.pe[:, :seq_len, :]
         return x
-    
-def pointwise_feedforward_network(d_model, dff):
-    return nn.Sequential(
-        nn.Linear(d_model, dff),
-        nn.ReLU(),
-        nn.Linear(dff, d_model)
-    )
-
     
 class DecoderLayer(torch.nn.Module):
     def __init__(self, d_model, num_heads, dff, dropout_rate=0.1):
