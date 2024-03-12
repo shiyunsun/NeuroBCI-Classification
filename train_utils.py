@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import copy
 import matplotlib.pyplot as plt
 from torch import optim
 from sklearn.model_selection import train_test_split
@@ -38,6 +39,7 @@ def model_train(num_epochs, model, optimizer, dataloader,
     test_acc = []
     
     crit = torch.nn.CrossEntropyLoss(label_smoothing=0.1)
+    best_model = None
     for i in range(num_epochs):
         batch_loss = []
         batch_acc = []
@@ -73,7 +75,6 @@ def model_train(num_epochs, model, optimizer, dataloader,
         loss = crit(scores, y_val)
         val_loss.append(loss.item())
         
-        
         # Evaluation on the test set and log info
         scores = model(X_test[:, :, :seq_len])
         y_predict = torch.argmax(scores, dim=1)
@@ -83,12 +84,10 @@ def model_train(num_epochs, model, optimizer, dataloader,
         test_loss.append(loss.item())
         
         # Save the model with the best performance
-        if save:
-            if validation_accuracy > max(val_acc):
-                torch.save(model, "best_val.pth")
-            if loss < min(val_loss):
-                torch.save(model, "best_loss.pth")
-
+        if validation_accuracy >= max(val_acc):
+            best_model = copy.deepcopy(model)
+            if save:
+                torch.save(model, "best_model.pth")
         
         if i%30 == 0 and not mute:
             print("Iter", i)
@@ -100,7 +99,7 @@ def model_train(num_epochs, model, optimizer, dataloader,
             print("Test Accuracy: ", np.mean(test_acc[-30:]))
             print()
     
-    return train_loss, train_acc, val_loss, val_acc, test_loss, test_acc
+    return train_loss, train_acc, val_loss, val_acc, test_loss, test_acc, best_model
 
 def plot_history(train_loss, train_acc, val_loss, val_acc, test_loss, test_acc):
     # Plot the training history
@@ -127,3 +126,10 @@ def plot_history(train_loss, train_acc, val_loss, val_acc, test_loss, test_acc):
     plt.show()
 
     return
+
+def evaluate(model, X_test, y_test, seq_len):
+    model.eval()
+    scores = model(X_test[:, :, :seq_len])
+    y_predict = torch.argmax(scores, dim=1)
+    test_accuracy = ((y_predict==y_test).sum().item()/y_test.shape[0])
+    return test_accuracy
